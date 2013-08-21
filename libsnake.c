@@ -34,6 +34,11 @@ void steer(Pixel*, int command);
 void draw_pixel(Pixel pixel);
 void change_snake_size(Snake *snake, int n);
 
+void game_over(){
+  endwin();
+  printf("GAME OVER\n");
+  exit(0);
+}
 void prepare_screen(){
   WINDOW *w = initscr();
   cbreak();
@@ -75,10 +80,16 @@ void print_pixels_info(Pixel* pixels, size_t size){
 void move_in_direction(Pixel *pixel, Direction direction){
   pixel->x += direction.x;
   pixel->y += direction.y;
-  if (pixel->y < 0){ pixel->y = 0;}
-  if (pixel->x < 0){ pixel->x = 0;}
-   if (pixel->y > LINES){ pixel->y = LINES;}
-  if (pixel->x > COLS){ pixel->x = COLS;}
+  if ((pixel->y < 0) 
+    || (pixel->x < 0) 
+    || (pixel->x > COLS) 
+    || (pixel->y > LINES) ){ 
+    game_over();}
+
+  //  if (pixel->y < 0){ pixel->y = 0;}
+  // if (pixel->x < 0){ pixel->x = 0;}
+  //  if (pixel->y > LINES){ pixel->y = LINES;}
+  // if (pixel->x > COLS){ pixel->x = COLS;}
 }
 
 void steer(Pixel* pixel, int command){
@@ -99,6 +110,8 @@ static void finish(){
   endwin();
   exit(0);
 }
+
+
 void change_snake_size(Snake *snake, int n){
   if((snake->size < MAX_SNAKE_SIZE) && (snake->size + 1 == n)){ snake->size++;}
 }
@@ -130,9 +143,8 @@ void main_loop(){
     if((frame == SKIP_FRAME) || (command != NO_INPUT)){
       steer(&current_pixel, command);
       move_in_direction(&current_pixel, *current_direction);
-      if(command == 'a'){
-        change_snake_size(&snake, snake.size+1);
-      }
+      if(command == 'a'){ change_snake_size(&snake, snake.size+1); }
+      if(command == 'q'){ game_over(); }
 
       clear();
       move(2,2);
