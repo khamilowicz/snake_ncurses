@@ -89,12 +89,10 @@ void move_in_direction(Pixel *pixel, Direction direction){
 
 bool check_colision(Pixel *pixel, size_t size){
   int i;
+  int j = 0;
   for (i = 0; i < size; i++) {
-    int j;
-    for (j = i; j < size; j++){
-      if((pixel[j].x == pixel[i].x) && (pixel[j].y == pixel[i].y)){
-        return true;
-      }
+    if((pixel[j].x == pixel[i].x) && (pixel[j].y == pixel[i].y)){
+      return true;
     }
   }
   return false;
@@ -145,23 +143,25 @@ void main_loop(){
   print_pixel_info(current_pixel);
   refresh();
 
+  bool pause = false;
+
   while(true){
     frame++;
     int command = getch();
-    if((frame == SKIP_FRAME) || (command != NO_INPUT)){
+    if(command == 'p'){ pause = !pause; }
+    if(!pause && ((frame == SKIP_FRAME) || (command != NO_INPUT))){
+      if((snake.size > 4) && (check_colision(snake.segment, snake.size))){
+        game_over();
+      }
       steer(&current_pixel, command);
       move_in_direction(&current_pixel, *current_direction);
       if(command == 'a'){ change_snake_size(&snake, snake.size+1); }
       if(command == 'q'){ game_over(); }
 
       clear();
-      move(2,2);
-      char nr[15];
-      sprintf(nr, "%i", command);
-      addstr(nr);
       change_segment(&snake, current_pixel, i_current_segment++);
       draw_snake(snake);
-      // print_pixels_info(snake.segment, snake.size);
+      print_pixels_info(snake.segment, snake.size);
       refresh();
       i_current_segment %= snake.size;
       frame = 0;
