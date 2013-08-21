@@ -2,7 +2,7 @@
 #include <ncurses.h>
 #include <string.h>
 
-#define MAX_SNAKE_SIZE 10
+#define MAX_SNAKE_SIZE 100
 #define SKIP_FRAME 20000
 #define NO_INPUT -1
 
@@ -23,10 +23,12 @@ typedef struct Direction
   unsigned char x;
 } Direction;
 
-const Direction left = (Direction){0,-1};
-const Direction right = (Direction){0,1};
-const Direction up = (Direction){-1,0};
-const Direction down = (Direction){1,0};
+Direction left = (Direction){0,-1};
+Direction right = (Direction){0,1};
+Direction up = (Direction){-1,0};
+Direction down = (Direction){1,0};
+
+Direction *current_direction = &down;
 
 void steer(Pixel*, int command);
 void draw_pixel(Pixel pixel);
@@ -36,7 +38,7 @@ void prepare_screen(){
   WINDOW *w = initscr();
   cbreak();
   nodelay(w, TRUE);
-  keypad(stdscr, TRUE);  /* enable keyboard mapping */
+keypad(stdscr, TRUE);  /* enable keyboard mapping */
   (void) nonl();    
 }
 
@@ -75,14 +77,16 @@ void move_in_direction(Pixel *pixel, Direction direction){
   pixel->y += direction.y;
   if (pixel->y < 0){ pixel->y = 0;}
   if (pixel->x < 0){ pixel->x = 0;}
+   if (pixel->y > LINES){ pixel->y = LINES;}
+  if (pixel->x > COLS){ pixel->x = COLS;}
 }
 
 void steer(Pixel* pixel, int command){
   switch(command){
-    case KEY_UP: { move_in_direction(pixel, up); break;}
-    case KEY_DOWN: { move_in_direction(pixel, down); break;}
-    case KEY_LEFT: { move_in_direction(pixel, left); break;}
-    case KEY_RIGHT: { move_in_direction(pixel, right); break;}
+    case KEY_UP: { current_direction = &up; break;}
+    case KEY_DOWN: { current_direction = &down; break;}
+    case KEY_LEFT: { current_direction = &left; break;}
+    case KEY_RIGHT: { current_direction = &right; break;}
   }
 }
 
@@ -124,24 +128,23 @@ void main_loop(){
     frame++;
     int command = getch();
     if((frame == SKIP_FRAME) || (command != NO_INPUT)){
-     steer(&current_pixel, command);
-     if(command == 'a'){
-      change_snake_size(&snake, snake.size+1);
-     }
+      steer(&current_pixel, command);
+      move_in_direction(&current_pixel, *current_direction);
+      if(command == 'a'){
+        change_snake_size(&snake, snake.size+1);
+      }
 
-     clear();
-     move(2,2);
-     char nr[15];
-     sprintf(nr, "%i", command);
-     addstr(nr);
-     if(command != NO_INPUT){
-       change_segment(&snake, current_pixel, i_current_segment++);
-     }
-     draw_snake(snake);
-     print_pixels_info(snake.segment, snake.size);
-     refresh();
-     i_current_segment %= snake.size;
-     frame = 0;
-   }
- }
+      clear();
+      move(2,2);
+      char nr[15];
+      sprintf(nr, "%i", command);
+      addstr(nr);
+      change_segment(&snake, current_pixel, i_current_segment++);
+      draw_snake(snake);
+      // print_pixels_info(snake.segment, snake.size);
+      refresh();
+      i_current_segment %= snake.size;
+      frame = 0;
+    }
+  }
 }
