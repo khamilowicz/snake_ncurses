@@ -1,7 +1,10 @@
 #include <stdlib.h>
 #include <ncurses.h>
 #include <string.h>
+
 #define MAX_SNAKE_SIZE 10
+#define SKIP_FRAME 20000
+#define NO_INPUT -1
 
 typedef struct{
   unsigned char y;
@@ -14,12 +17,13 @@ typedef struct{
   Pixel segment[MAX_SNAKE_SIZE];
 }Snake;
 
-void steer(Pixel*);
+void steer(Pixel*, int command);
 void draw_pixel(Pixel pixel);
 
 void prepare_screen(){
-  (void) initscr();
-  (void) cbreak();       /* take input chars one at a time, no wait for \n */
+  WINDOW *w = initscr();
+  cbreak();
+  nodelay(w, TRUE);
   keypad(stdscr, TRUE);  /* enable keyboard mapping */
   (void) nonl();    
 }
@@ -54,8 +58,8 @@ void print_pixels_info(Pixel* pixels, size_t size){
   }
 }
 
-void steer(Pixel* pixel){
-  switch(getch()){
+void steer(Pixel* pixel, int command){
+  switch(command){
     case KEY_UP: { pixel->y--; break;}
     case KEY_DOWN: { pixel->y++; break;}
     case KEY_LEFT: { pixel->x--; break;}
@@ -84,6 +88,7 @@ void main_loop(){
   int posy = 5;
   int posx = 5;
   int i_current_segment = 0;
+  int frame = 0;
 
   Pixel current_pixel;
   current_pixel = (Pixel){posy, posx, 'b'};
@@ -95,12 +100,23 @@ void main_loop(){
   refresh();
 
   while(true){
-    steer(&current_pixel);
-    clear();
-    change_segment(&snake, current_pixel, i_current_segment++);
-    draw_snake(snake);
-    print_pixels_info(snake.segment, snake.size);
-    refresh();
-    i_current_segment %= MAX_SNAKE_SIZE;
-  }
+    frame++;
+    int command = getch();
+    if((frame == SKIP_FRAME) || (command != NO_INPUT)){
+     steer(&current_pixel, command);
+     clear();
+     move(2,2);
+     char nr[15];
+     sprintf(nr, "%i", command);
+     addstr(nr);
+     if(command != NO_INPUT){
+       change_segment(&snake, current_pixel, i_current_segment++);
+     }
+     draw_snake(snake);
+     print_pixels_info(snake.segment, snake.size);
+     refresh();
+     i_current_segment %= MAX_SNAKE_SIZE;
+     frame = 0;
+   }
+ }
 }
