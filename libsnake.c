@@ -1,9 +1,11 @@
 #include <stdlib.h>
 #include <ncurses.h>
 #include <string.h>
+#include <math.h>
+
 
 #define MAX_SNAKE_SIZE 100
-#define SKIP_FRAME 20000
+#define SKIP_FRAME 35000
 #define NO_INPUT -1
 
 typedef struct{
@@ -38,6 +40,12 @@ void game_over(){
   endwin();
   printf("GAME OVER\n");
   exit(0);
+}
+
+bool collision_pixels(Pixel pixel_1, Pixel pixel_2){
+  if((pixel_1.x == pixel_2.x) 
+  && (pixel_1.y == pixel_2.y)){ return true;}
+    return false;
 }
 void prepare_screen(){
   WINDOW *w = initscr();
@@ -91,7 +99,7 @@ bool check_colision(Pixel *pixel, size_t size){
   int i;
   int j = 0;
   for (i = 1; i < size; i++) {
-    if((pixel[j].x == pixel[i].x) && (pixel[j].y == pixel[i].y)){
+    if(collision_pixels(pixel[i], pixel[j])){
       return true;
     }
   }
@@ -127,6 +135,13 @@ void change_segment(Snake *snake, Pixel pixel, int n){
   snake->segment[n] = pixel;
 }
 
+void put_in_random_place(Pixel *pixel){
+  int rand_x = (int)floor(( rand() / (double)RAND_MAX) * COLS);
+  int rand_y = (int)floor(( rand() / (double)RAND_MAX) * LINES);
+  pixel->x = rand_x;
+  pixel->y = rand_y;
+}
+
 
 void main_loop(){
   int posy = 5;
@@ -136,6 +151,9 @@ void main_loop(){
 
   Pixel current_pixel;
   current_pixel = (Pixel){posy, posx, 'b'};
+  Pixel fruit;
+  fruit.ch = '@';
+  put_in_random_place(&fruit);
   Snake snake;
   snake.segment[0] = current_pixel;
   snake.size = 1;
@@ -144,6 +162,7 @@ void main_loop(){
   refresh();
 
   bool pause = false;
+  bool collision = false;
 
   while(true){
     frame++;
@@ -155,11 +174,31 @@ void main_loop(){
       if(command == 'a'){ change_snake_size(&snake, snake.size+1); }
       if(command == 'q'){ game_over(); }
 
+
       clear();
       change_segment(&snake, current_pixel, i_current_segment++);
       if(check_colision(snake.segment, snake.size)){ game_over(); }
       draw_snake(snake);
-      print_pixels_info(snake.segment, snake.size);
+      draw_pixel(fruit);
+      // print_pixels_info(snake.segment, snake.size);
+      int i;
+      while(!collision && (i < snake.size)){
+        if (collision_pixels(fruit, snake.segment[i])){collision = true;}
+        i++;
+      }
+      i = 0;
+     
+      if(collision){
+        put_in_random_place(&fruit);
+        change_snake_size(&snake, snake.size+1);
+        collision = !collision;
+      }
+
+     move(20,10);
+      print_pixel_info(fruit);
+      move(21,10);
+      print_pixel_info(snake.segment[0]);
+
       refresh();
       i_current_segment %= snake.size;
       frame = 0;

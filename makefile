@@ -1,4 +1,4 @@
-LIBS = -lncurses
+LIBS = -lncurses -lm
 
 all:
 	gcc snake.c -o snake $(LIBS)
