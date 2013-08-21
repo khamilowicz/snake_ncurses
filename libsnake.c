@@ -85,11 +85,19 @@ void move_in_direction(Pixel *pixel, Direction direction){
     || (pixel->x > COLS) 
     || (pixel->y > LINES) ){ 
     game_over();}
+}
 
-  //  if (pixel->y < 0){ pixel->y = 0;}
-  // if (pixel->x < 0){ pixel->x = 0;}
-  //  if (pixel->y > LINES){ pixel->y = LINES;}
-  // if (pixel->x > COLS){ pixel->x = COLS;}
+bool check_colision(Pixel *pixel, size_t size){
+  int i;
+  for (i = 0; i < size; i++) {
+    int j;
+    for (j = i; j < size; j++){
+      if((pixel[j].x == pixel[i].x) && (pixel[j].y == pixel[i].y)){
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 void steer(Pixel* pixel, int command){
