@@ -17,8 +17,20 @@ typedef struct{
   Pixel segment[MAX_SNAKE_SIZE];
 }Snake;
 
+typedef struct Direction
+{
+  unsigned char y;
+  unsigned char x;
+} Direction;
+
+const Direction left = (Direction){0,-1};
+const Direction right = (Direction){0,1};
+const Direction up = (Direction){-1,0};
+const Direction down = (Direction){1,0};
+
 void steer(Pixel*, int command);
 void draw_pixel(Pixel pixel);
+void change_snake_size(Snake *snake, int n);
 
 void prepare_screen(){
   WINDOW *w = initscr();
@@ -58,14 +70,19 @@ void print_pixels_info(Pixel* pixels, size_t size){
   }
 }
 
+void move_in_direction(Pixel *pixel, Direction direction){
+  pixel->x += direction.x;
+  pixel->y += direction.y;
+  if (pixel->y < 0){ pixel->y = 0;}
+  if (pixel->x < 0){ pixel->x = 0;}
+}
+
 void steer(Pixel* pixel, int command){
   switch(command){
-    case KEY_UP: { pixel->y--; break;}
-    case KEY_DOWN: { pixel->y++; break;}
-    case KEY_LEFT: { pixel->x--; break;}
-    case KEY_RIGHT: { pixel->x++; break;}
-    if (pixel->y < 0){ pixel->y = 0;}
-    if (pixel->x < 0){ pixel->x = 0;}
+    case KEY_UP: { move_in_direction(pixel, up); break;}
+    case KEY_DOWN: { move_in_direction(pixel, down); break;}
+    case KEY_LEFT: { move_in_direction(pixel, left); break;}
+    case KEY_RIGHT: { move_in_direction(pixel, right); break;}
   }
 }
 
@@ -78,11 +95,15 @@ static void finish(){
   endwin();
   exit(0);
 }
+void change_snake_size(Snake *snake, int n){
+  if((snake->size < MAX_SNAKE_SIZE) && (snake->size + 1 == n)){ snake->size++;}
+}
 
 void change_segment(Snake *snake, Pixel pixel, int n){
+  change_snake_size(snake, n);
   snake->segment[n] = pixel;
-  if(snake->size < MAX_SNAKE_SIZE){ snake->size++;}
 }
+
 
 void main_loop(){
   int posy = 5;
@@ -95,7 +116,7 @@ void main_loop(){
   Snake snake;
   snake.segment[0] = current_pixel;
   snake.size = 1;
-  
+
   print_pixel_info(current_pixel);
   refresh();
 
@@ -104,6 +125,10 @@ void main_loop(){
     int command = getch();
     if((frame == SKIP_FRAME) || (command != NO_INPUT)){
      steer(&current_pixel, command);
+     if(command == 'a'){
+      change_snake_size(&snake, snake.size+1);
+     }
+
      clear();
      move(2,2);
      char nr[15];
@@ -115,7 +140,7 @@ void main_loop(){
      draw_snake(snake);
      print_pixels_info(snake.segment, snake.size);
      refresh();
-     i_current_segment %= MAX_SNAKE_SIZE;
+     i_current_segment %= snake.size;
      frame = 0;
    }
  }
