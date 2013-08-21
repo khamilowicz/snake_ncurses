@@ -90,7 +90,7 @@ void move_in_direction(Pixel *pixel, Direction direction){
 bool check_colision(Pixel *pixel, size_t size){
   int i;
   int j = 0;
-  for (i = 0; i < size; i++) {
+  for (i = 1; i < size; i++) {
     if((pixel[j].x == pixel[i].x) && (pixel[j].y == pixel[i].y)){
       return true;
     }
