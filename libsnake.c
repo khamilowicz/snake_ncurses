@@ -150,9 +150,6 @@ void main_loop(){
     int command = getch();
     if(command == 'p'){ pause = !pause; }
     if(!pause && ((frame == SKIP_FRAME) || (command != NO_INPUT))){
-      if((snake.size > 4) && (check_colision(snake.segment, snake.size))){
-        game_over();
-      }
       steer(&current_pixel, command);
       move_in_direction(&current_pixel, *current_direction);
       if(command == 'a'){ change_snake_size(&snake, snake.size+1); }
@@ -160,6 +157,7 @@ void main_loop(){
 
       clear();
       change_segment(&snake, current_pixel, i_current_segment++);
+      if(check_colision(snake.segment, snake.size)){ game_over(); }
       draw_snake(snake);
       print_pixels_info(snake.segment, snake.size);
       refresh();
