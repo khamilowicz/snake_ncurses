@@ -3,6 +3,10 @@
 
 #include "snake.h"
 
+#ifndef _ENGINE_
+#include "engine.h"
+#endif
+
 int main(int argc, char const *argv[])
 {
   (void) signal(SIGINT, finish);
